@@ -147,17 +147,8 @@ typedef struct {
 
 
 // screen functions
-static void draw_state (chip_state_t *chip);
+
 static void draw_board(chip_state_t *chip, uint32_t x_start,  uint32_t y_start) ;
-static void draw_line(chip_state_t *chip, uint32_t row, rgba_t color);
-static void draw_pixel(chip_state_t *chip, uint32_t x,  uint32_t y,  rgba_t color) ;
-static void draw_cog(chip_state_t *chip, uint32_t x,  uint32_t y ,int8_t phase);
-
-static void draw_right_arrow(chip_state_t *chip, uint32_t x_start,  uint32_t y_start, uint8_t wipe);
-static void draw_left_arrow(chip_state_t *chip, uint32_t x_start,  uint32_t y_start, uint8_t wipe);
-
-static void draw_rectangle(chip_state_t *chip, uint32_t x_start, uint32_t y_start, uint32_t x_len, uint32_t y_len,  rgba_t color, uint8_t fill);
-static void draw_speed(chip_state_t *chip, uint32_t x_start, uint32_t y_start, uint32_t x_len, uint32_t y_len,  rgba_t color, uint8_t fill) ;
 
 
 // timer for graphics
@@ -265,28 +256,6 @@ void chip_init(void) {
   chip-> bar_left_x=chip->motor_A_x ;
   chip-> bar_right_x=chip->motor_B_y ;
    printf("Framebuffer: fb_w=%d, fb_h=%d\n", chip->fb_w, chip->fb_h);
-//  box around displays
-   draw_rectangle(chip, 101,10,75,100,chip->green ,0);
-   draw_rectangle(chip, 175,10,75,100,chip->green ,0);
-// wires top
-   draw_rectangle(chip, 21,3,130,1, chip-> white   ,0); 
-   draw_rectangle(chip, 21,4,25,5, chip-> white   ,0);
-   draw_rectangle(chip, 126,4,25,5, chip-> white  ,0);
-// wires base   
-   draw_rectangle(chip, 21,115,207,1, chip-> white  ,0);
-   draw_rectangle(chip, 21,110,25,5, chip-> white   ,0);
-   draw_rectangle(chip, 203,110,25,5, chip-> white   ,0);
-// board
-  printf("Draw the board ...\n");
-  draw_board(chip, 10,1);
-  printf("Draw the speed holders ...\n");
-  draw_speed(chip, chip-> bar_left_x,chip-> bar_1_2_y,50,15, chip-> purple  ,0);
-  draw_speed(chip, chip-> bar_right_x,chip-> bar_1_2_y,50,15, chip-> purple  ,0);
-  //Draw the cogs
-  printf("Draw the cogs ...\n");
-  draw_cog(chip, chip->motor_A_y,chip->motor_A_x,0);
-  draw_cog(chip, chip->motor_A_y,chip->motor_B_y,0);
-
 
 
 const timer_config_t timer_config_Awatchdog = {
@@ -376,7 +345,7 @@ void chip_pin_change_PWM_A(void *user_data, pin_t pin, uint32_t value) {
   if ( chip->previous_speed_percent_A != chip->speed_percent_A)
   {
    // printf("chip->previous_speed_percent_A %d chip->speed_percent_A %d \n",chip->previous_speed_percent_A ,chip->speed_percent_A );
-   draw_state(chip);
+ 
    chip->previous_speed_percent_A = chip->speed_percent_A;
   }
 }
@@ -400,7 +369,7 @@ void chip_pin_change_PWM_B(void *user_data, pin_t pin, uint32_t value) {
   if ( chip->previous_speed_percent_B != chip->speed_percent_B  )
   {
    //printf("chip->previous_speed_percent_B %d chip->speed_percent_B %d \n",chip->previous_speed_percent_B ,chip->speed_percent_B );
-   draw_state(chip);
+   send_signal(chip);
    chip->previous_speed_percent_B = chip->speed_percent_B;
   }
  }
@@ -450,11 +419,11 @@ if (use_PWM_ENB )
   if ( !IN3 && IN4) chip-> drive_B_state = 1;
   if (IN3 == IN4) chip-> drive_B_state =  2;
  }
-  draw_state(chip);
+  send_signal(chip);
 }
 
 
-void draw_state(chip_state_t *chip) {
+void send_signal(chip_state_t *chip) {
   
   //turn off the two timers
   timer_stop(chip->timer_motorA);
@@ -465,48 +434,35 @@ void draw_state(chip_state_t *chip) {
 // backwards
  if (chip-> drive_A_state == 0) 
  {
-   // remove left - place right
-    draw_right_arrow(chip,chip->motor_1_2_arrow_y ,chip->motorA_right_arrow_x,0);
-    draw_left_arrow(chip,chip->motor_1_2_arrow_y ,chip->motorA_left_arrow_x,1);
+   
+//chip->speed_percent_A
 
  }
  //forwards
  if (chip-> drive_A_state == 1) 
  {
-    // remove right - place left
-  draw_left_arrow(chip,chip->motor_1_2_arrow_y ,chip->motorA_left_arrow_x,0);
-  draw_right_arrow(chip,chip->motor_1_2_arrow_y ,chip->motorA_right_arrow_x,1);
+//chip->speed_percent_A
  }
+
  //stopped
  if (chip-> drive_A_state == 2 || chip-> drive_A_state == 3)
  {
-  // remove left and right
-  draw_right_arrow(chip,chip->motor_1_2_arrow_y ,chip->motorA_right_arrow_x,1);
-  draw_left_arrow(chip,chip->motor_1_2_arrow_y ,chip->motorA_left_arrow_x,1); 
+//chip->speed_percent_A
  }
 
-
-   draw_speed(chip, chip-> bar_left_x,chip-> bar_1_2_y,50,15, chip-> purple  ,chip->speed_percent_A);
-   draw_speed(chip, chip-> bar_right_x,chip-> bar_1_2_y,50,15, chip-> purple  ,chip->speed_percent_B);
 
 
  if (chip-> drive_B_state == 0)
  { 
-    // remove left - place right
-    draw_right_arrow(chip,chip->motor_1_2_arrow_y ,chip->motorB_right_arrow_x,0);
-    draw_left_arrow(chip,chip->motor_1_2_arrow_y ,chip->motorB_left_arrow_x,1);
+    // chip->speed_percent_B
  }
  if (chip-> drive_B_state == 1) 
  {
-  // remove right - place left
-  draw_right_arrow(chip,chip->motor_1_2_arrow_y ,chip->motorB_right_arrow_x,1);
-  draw_left_arrow(chip,chip->motor_1_2_arrow_y ,chip->motorB_left_arrow_x,0);
+  //  // chip->speed_percent_B
  }
  if (chip-> drive_B_state == 2 || chip-> drive_B_state == 3)
  {
-  // remove both arrows
-  draw_right_arrow(chip,chip->motor_1_2_arrow_y ,chip->motorB_right_arrow_x,1);
-  draw_left_arrow(chip,chip->motor_1_2_arrow_y ,chip->motorB_right_arrow_x,1); 
+  //  // chip->speed_percent_B
  }
   if (chip-> drive_A_state == 0 || chip-> drive_A_state == 1)
   {
@@ -553,44 +509,8 @@ void chip_timer_event_Bwatchdog(void *user_data) {
   chip_state_t *chip = (chip_state_t*)user_data;
  }
 
-void draw_line(chip_state_t *chip, uint32_t row, rgba_t color) {
-  uint32_t offset = chip->fb_w * 4 * row;
-  for (int x = 0; x < chip->fb_w * 4; x += 4) {
-    buffer_write(chip->framebuffer, offset + x, (uint8_t*)&color, sizeof(color));
-  }
-}
 
- void draw_pixel(chip_state_t *chip, uint32_t x,  uint32_t y,  rgba_t color) {
-      if (x < 0 || x >= chip->fb_w || y < 0 || y >= chip->fb_h) {
-        return;
-    }
-  uint32_t offset = chip->fb_w * 4 * y ;
-  buffer_write(chip->framebuffer, offset + x*4, (uint8_t*)&color, sizeof(color));
-
-}
-
-void draw_cog(chip_state_t *chip, uint32_t x_start,  uint32_t y_start,int8_t phase) {
-// size of our graphic
-uint8_t square_size = 50;
-uint32_t pixel_spot_data = 0;
-for (int x=x_start;x < square_size + x_start; x++)
-   {
-     for (int y=y_start;y<square_size + y_start ;y++)
-    {
-        uint32_t pixel_data = all_cogs[phase][pixel_spot_data] ;
-        rgba_t  color =
-            { 
-            .r= (pixel_data  & 0xFF000000) >> 24,
-            .g = (pixel_data & 0x00FF0000) >> 16,
-            .b = (pixel_data & 0x0000FF00) >> 8,
-            .a = (pixel_data & 0x000000FF) 
-            };
-        uint32_t offset = chip->fb_w * 4 ;  
-        buffer_write(chip->framebuffer, (offset * x) + y * 4, (uint8_t*)&color , 4); 
-        pixel_spot_data++;
-    }
-   }
-}  
+ 
 
 void draw_board(chip_state_t *chip, uint32_t x_start,  uint32_t y_start) {
 // size of our graphic
@@ -621,111 +541,6 @@ for (int x=x_start;x < square_size + x_start; x++)
 } 
 
 
-
-void draw_rectangle(chip_state_t *chip, uint32_t x_start, uint32_t y_start, uint32_t x_len, uint32_t y_len,  rgba_t color, uint8_t fill) {
-  // draw the top and base lines
-  uint32_t offset = chip->fb_w * 4 * y_start;
-  uint32_t offset2 = chip->fb_w * 4 * (y_len + y_start) ;
-  for (int x = x_start * 4 ; x < x_start * 4 + x_len * 4; x += 4) {
-    buffer_write(chip->framebuffer, offset + x, (uint8_t*)&color, sizeof(color));
-    buffer_write(chip->framebuffer, offset2 + x, (uint8_t*)&color, sizeof(color));
-  }
-// draw the left and right lines
-  for (int y = y_start  ; y < y_start + y_len ; y++) {
-    buffer_write(chip->framebuffer, y * chip->fb_w * 4 + x_start * 4 , (uint8_t*)&color, sizeof(color));
-    buffer_write(chip->framebuffer, y * chip->fb_w * 4 +x_start * 4 + (x_len * 4)-4 , (uint8_t*)&color, sizeof(color));
-  }
-}
-
-
-void draw_speed(chip_state_t *chip, uint32_t x_start, uint32_t y_start, uint32_t x_len, uint32_t y_len,  rgba_t color, uint8_t percent_up) {
-  // draw the top and base lines
-  uint32_t offset = chip->fb_w * 4 * y_start;
-  uint32_t offset2 = chip->fb_w * 4 * (y_len + y_start) ;
-
-  for (int x = x_start * 4 ; x < x_start * 4 + x_len * 4; x += 4) {
-    buffer_write(chip->framebuffer, offset + x, (uint8_t*)&color, sizeof(color));
-    buffer_write(chip->framebuffer, offset2 + x, (uint8_t*)&color, sizeof(color));
-  }
-// draw the left and right lines
-  for (int y = y_start  ; y < y_start + y_len ; y++) {
-    buffer_write(chip->framebuffer, y * chip->fb_w * 4 + x_start * 4 , (uint8_t*)&color, sizeof(color));
-    buffer_write(chip->framebuffer, y * chip->fb_w * 4 +x_start * 4 + (x_len * 4)-4 , (uint8_t*)&color, sizeof(color));
-  }
- rgba_t color_black = chip->black;
- for (int y = y_start +1 ; y < y_start + y_len  ; y++) {
-
-    for ( int z= (x_start +1) * 4 ; z < (x_start) * 4 + ((x_len-1)* 4) ; z+= 4)
-    {
-    buffer_write(chip->framebuffer, y * chip->fb_w * 4 + z , (uint8_t*)&color_black , sizeof(color_black ));
-    
-    }
- }
-    rgba_t color2 = chip->white;
-    percent_up = percent_up /2;
-    //printf(" x_len %d       percent_up %d\n",x_len, percent_up);
-    for (int y = y_start +1 ; y < y_start + y_len  ; y++) {
-
-    for ( int z= (x_start +1) * 4 ; z < (x_start) * 4 + ((percent_up)* 4) ; z+= 4)
-    {
-    buffer_write(chip->framebuffer, y * chip->fb_w * 4 + z , (uint8_t*)&color2, sizeof(color2));
-    
-    }
-  }
-}
-
-void draw_right_arrow(chip_state_t *chip, uint32_t x_start,  uint32_t y_start, uint8_t wipe) {
-uint32_t pixel_spot_data = 0;
-for (int x=x_start;x < RIGHT_HEIGHT + x_start; x++)
-   {
-     for (int y=y_start;y<  RIGHT_WIDTH+ y_start ;y++)
-    {
-       uint32_t pixel_data = right_arrow[pixel_spot_data] ;
-        rgba_t  color =
-            { 
-            .r=  (pixel_data  & 0xFF000000) >> 24,
-            .g = (pixel_data & 0x00FF0000) >> 16,
-            .b = (pixel_data & 0x0000FF00) >> 8,
-            .a = (pixel_data & 0x000000FF) 
-            };
-        
-     if(wipe == 1)
-{
-  color =  chip-> black;
-}   
-        uint32_t offset = chip->fb_w * 4 ;  
-        buffer_write(chip->framebuffer, (offset * x) + y * 4, (uint8_t*)&color , 4); 
-        pixel_spot_data++;
-    }
-   }
-}  
-
-void draw_left_arrow(chip_state_t *chip, uint32_t x_start,  uint32_t y_start, uint8_t wipe) {
-uint32_t pixel_spot_data = 0;
-for (int x=x_start;x < RIGHT_HEIGHT + x_start; x++)
-   {
-     for (int y=y_start;y<  RIGHT_WIDTH+ y_start ;y++)
-    {
-        uint32_t pixel_data = left_arrow[pixel_spot_data] ;
-        rgba_t  color =
-            { 
-            .r= (pixel_data  & 0xFF000000) >> 24,
-            .g = (pixel_data & 0x00FF0000) >> 16,
-            .b = (pixel_data & 0x0000FF00) >> 8,
-            .a = (pixel_data & 0x000000FF) 
-            };
-        
-        
-if(wipe == 1)
-{
-  color =  chip-> black;
-}
-        uint32_t offset = chip->fb_w * 4 ;  
-        buffer_write(chip->framebuffer, (offset * x) + y * 4, (uint8_t*)&color , 4); 
-        pixel_spot_data++;
-    }
-   }
-}  
 
 
 
