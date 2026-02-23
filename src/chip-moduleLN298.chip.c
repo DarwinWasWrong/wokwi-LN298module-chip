@@ -149,7 +149,7 @@ typedef struct {
 // screen functions
 
 static void draw_board(chip_state_t *chip, uint32_t x_start,  uint32_t y_start) ;
-
+static void send_signal(chip_state_t *chip);
 
 // timer for graphics
 static void chip_timer_event_motorA(void *user_data);
@@ -165,7 +165,7 @@ static void chip_pin_change_PWM_A(void *user_data, pin_t pin, uint32_t value);
 static void chip_pin_change_PWM_B(void *user_data, pin_t pin, uint32_t value);
 
 void chip_init(void) {
-  printf("*** L298chip initialising...\n");
+  printf("*** LN298chip initialising...\n");
   
   chip_state_t *chip = malloc(sizeof(chip_state_t));
 
