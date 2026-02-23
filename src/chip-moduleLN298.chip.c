@@ -149,6 +149,7 @@ typedef struct {
 // screen functions
 
 static void draw_board(chip_state_t *chip, uint32_t x_start,  uint32_t y_start) ;
+
 static void send_signal(chip_state_t *chip);
 
 // timer for graphics
@@ -481,7 +482,7 @@ void send_signal(chip_state_t *chip) {
 // graphics for motor A
 void chip_timer_event_motorA(void *user_data) {
   chip_state_t *chip = (chip_state_t*)user_data;
-  draw_cog(chip, chip->motor_A_y,chip->motor_A_x,chip->motorAphase);
+  
   if ( chip-> drive_A_state == 0 )   chip->motorAphase=chip->motorAphase - 1;
   if ( chip-> drive_A_state == 1) chip->motorAphase=chip->motorAphase + 1;
   if (chip->motorAphase < 0) chip->motorAphase =8;
@@ -492,7 +493,7 @@ void chip_timer_event_motorA(void *user_data) {
 // graphics for motor B
 void chip_timer_event_motorB(void *user_data) {
   chip_state_t *chip = (chip_state_t*)user_data;
-  draw_cog(chip, chip->motor_B_x,chip->motor_B_y,chip->motorBphase);
+
   if ( chip-> drive_B_state == 0 ) chip->motorBphase=chip->motorBphase - 1;
   if ( chip-> drive_B_state == 1) chip->motorBphase=chip->motorBphase + 1;
   if (chip->motorBphase < 0) chip->motorBphase = 8;
