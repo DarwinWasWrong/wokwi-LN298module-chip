@@ -21,13 +21,6 @@
 #define BOARD_WIDTH 100
 
 
-
-
-
-
-
-
-
 // the various states the channel can be in
 const char drive_state[][17]=
 {
@@ -46,7 +39,7 @@ typedef struct {
 } rgba_t;
 
 typedef struct {
-  
+
   //Module Pins
   // channel A
   pin_t pin_IN1;
