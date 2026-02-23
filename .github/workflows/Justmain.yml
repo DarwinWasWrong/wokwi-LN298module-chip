@@ -27,6 +27,7 @@ jobs:
       - name: Create Tag
         # Uses the workflow run number to create a unique tag name
         run: |
+          token: ${{ secrets.GITHUB_TOKEN }}
           TAG_NAME="v${{ github.run_number }}"
           git tag -a $TAG_NAME -m "Release $TAG_NAME"
           git push origin $TAG_NAME
