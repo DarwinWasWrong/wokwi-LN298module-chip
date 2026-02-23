@@ -1,4 +1,4 @@
-name: Build Chip
+name: Build Chip No Version
 
 on:
   push:
@@ -24,6 +24,12 @@ jobs:
           path: |
             dist/chip.json
             dist/chip.wasm
+      - name: Create Tag
+        # Uses the workflow run number to create a unique tag name
+        run: |
+          TAG_NAME="v${{ github.run_number }}"
+          git tag -a $TAG_NAME -m "Release $TAG_NAME"
+          git push origin $TAG_NAME
 
   # The release job only runs when you push a tag starting with "v", e.g. v1.0.0 
   release:
