@@ -46,12 +46,16 @@ typedef struct {
   pin_t pin_IN2;
   pin_t pin_ENA;
   pin_t pin_ENA_5v;   // 5V for enable
+  pin_t pin_M1;   // Motor 1
+  pin_t pin_M2;   // Motor 2
+
 // Channel B
   pin_t pin_IN3;
   pin_t pin_IN4;
   pin_t pin_ENB;
   pin_t pin_ENB_5v;  // 5V for enable
- 
+  pin_t pin_M3;   // Motor 3
+  pin_t pin_M4;   // Motor 4
 
 
 // powers and ground
@@ -105,6 +109,12 @@ typedef struct {
   
   uint8_t  speed_percent_A;
   uint8_t  speed_percent_B;
+
+  uint8_t  speed_analog_M1;
+  uint8_t  speed_analog_M2;
+  uint8_t  speed_analog_M3;
+  uint8_t  speed_analog_M4;
+
   uint8_t  previous_speed_percent_A;
   uint8_t  previous_speed_percent_B;
 
@@ -112,27 +122,6 @@ typedef struct {
   uint8_t  drive_B_state;
   uint8_t  previous_drive_A_state;
   uint8_t  previous_drive_B_state;
-  
-  // motor graphics position
-  int8_t motorAphase;
-  int8_t motorBphase;
-  uint8_t motor_A_y;
-  uint8_t motor_A_x;
-  uint8_t motor_B_x;
-  uint8_t motor_B_y;
-
-// arrow graphics position
-  uint8_t motor_1_2_arrow_y ;
-
-  uint8_t motorA_right_arrow_x;
-  uint8_t motorA_left_arrow_x;
-
-  uint8_t motorB_right_arrow_x;
-  uint8_t motorB_left_arrow_x;
-
-  uint8_t bar_1_2_y;
-  uint8_t bar_left_x;
-  uint8_t bar_right_x;
 
   timer_t timer_motorA;
   timer_t timer_motorB;
@@ -145,9 +134,6 @@ static void draw_board(chip_state_t *chip, uint32_t x_start,  uint32_t y_start) 
 
 static void send_signal(chip_state_t *chip);
 
-// timer for graphics
-static void chip_timer_event_motorA(void *user_data);
-static void chip_timer_event_motorB(void *user_data);
 
 // timer for watchdog
 static void chip_timer_event_Awatchdog(void *user_data);
@@ -166,12 +152,14 @@ void chip_init(void) {
   chip->pin_ENA = pin_init("ENA",INPUT);
   chip->pin_IN1 = pin_init("IN1",INPUT);
   chip->pin_IN2 = pin_init("IN2",INPUT);
- 
+  chip->pin_M1 = pin_init("M1",ANALOG);
+  chip->pin_M2 = pin_init("M2",ANALOG);
 
   chip->pin_ENB = pin_init("ENB",INPUT);
   chip->pin_IN3 = pin_init("IN3",INPUT);
   chip->pin_IN4 = pin_init("IN4",INPUT);
-
+  chip->pin_M3 = pin_init("M3",ANALOG);
+  chip->pin_M4 = pin_init("M4",ANALOG);
 
   chip->pin_VCC = pin_init("VCC",INPUT);
   chip->pin_GND = pin_init("GND",INPUT);
@@ -214,6 +202,10 @@ void chip_init(void) {
   // Display values
   chip->speed_percent_A=0;
   chip->speed_percent_B=0;
+  chip->pin_M1=0;
+  chip->pin_M2=0;
+  chip->pin_M3=0;
+  chip->pin_M4=0;
 
   // display colors
   chip-> white      = (rgba_t) { .r = 0xff, .g = 0xff, .b = 0xff, .a = 0xff };
@@ -228,30 +220,6 @@ void chip_init(void) {
   chip->framebuffer = framebuffer_init(&chip->fb_w, &chip->fb_h);
   printf("Framebuffer: fb_w=%d, fb_h=%d\n", chip->fb_w, chip->fb_h);
  
- // settings for gears and displays
- // phase of gear display
-  chip->motorAphase=0;
-  chip->motorBphase=0;
-  // positioning
-  chip->motor_A_y=20;
-  chip->motor_A_x=113;
-  chip->motor_B_x=20;
-  chip->motor_B_y=187;
-  // arrow and speed base position
-  chip->motor_1_2_arrow_y = 70;
-  // Motor A arrow positions  relative to motor A position
-  chip->motorA_right_arrow_x =chip->motor_A_x + 40;
-  chip->motorA_left_arrow_x = chip->motor_A_x  ;
-  // Motor B arrow positions  relative to motor B position
-  chip->motorB_right_arrow_x = chip->motor_B_y +  40;
-  chip->motorB_left_arrow_x = chip->motor_B_y;
-  // bars position relative to motor
-  chip-> bar_1_2_y=  chip->motor_1_2_arrow_y + 20;
-  chip-> bar_left_x=chip->motor_A_x ;
-  chip-> bar_right_x=chip->motor_B_y ;
-   printf("Framebuffer: fb_w=%d, fb_h=%d\n", chip->fb_w, chip->fb_h);
-
-
 const timer_config_t timer_config_Awatchdog = {
     .callback = chip_timer_event_Awatchdog,
     .user_data = chip,
@@ -265,22 +233,6 @@ const timer_config_t timer_config_Bwatchdog = {
   };
   timer_t timer_Bwatchdog = timer_init(&timer_config_Bwatchdog);
   timer_start(timer_Bwatchdog,100000, true);
-
-
-const timer_config_t timer_config_motorA = {
-    .callback = chip_timer_event_motorA,
-    .user_data = chip,
-  };
-  chip->timer_motorA = timer_init(&timer_config_motorA);
- // timer_start(chip->timer_motorA,20000, true);
-
-const timer_config_t timer_config_motorB = {
-    .callback = chip_timer_event_motorB,
-    .user_data = chip,
-  };
-  chip->timer_motorB = timer_init(&timer_config_motorB);
- // timer_start(timer_motorB, 20000, true);
-
 
 // config for PWM A watch
 const pin_watch_config_t watch_config_PWM_A = {
@@ -315,7 +267,8 @@ const pin_watch_config_t watch_config_PWM_B = {
   pin_watch(chip->pin_IN3, &watch_config);
   pin_watch(chip->pin_IN4, &watch_config);
 
-
+  printf( "Draw Board");
+  draw_board(chip,0,0);
 }
 
 // PWM A pin change function for watch
@@ -338,7 +291,7 @@ void chip_pin_change_PWM_A(void *user_data, pin_t pin, uint32_t value) {
   // if a change then redisplay
   if ( chip->previous_speed_percent_A != chip->speed_percent_A)
   {
-   // printf("chip->previous_speed_percent_A %d chip->speed_percent_A %d \n",chip->previous_speed_percent_A ,chip->speed_percent_A );
+   send_signal(chip);
  
    chip->previous_speed_percent_A = chip->speed_percent_A;
   }
@@ -421,77 +374,63 @@ void send_signal(chip_state_t *chip) {
   
   //turn off the two timers
   timer_stop(chip->timer_motorA);
+
   timer_stop(chip->timer_motorB);
+
+  printf("chip->speed_percent_A %d chip->speed_percent_B %d \n",chip->speed_percent_A ,chip->speed_percent_B );
 
 
 
 // backwards
  if (chip-> drive_A_state == 0) 
  {
-   
-//chip->speed_percent_A
+  printf("A backwards \n"); 
+ pin_dac_write(chip->pin_M1, 0);
+ pin_dac_write(chip->pin_M2, chip->speed_percent_A);
 
  }
  //forwards
  if (chip-> drive_A_state == 1) 
  {
-//chip->speed_percent_A
+    printf("A forwards \n"); 
+ pin_dac_write(chip->pin_M1, chip->speed_percent_A);
+ pin_dac_write(chip->pin_M2, 0);
  }
 
  //stopped
  if (chip-> drive_A_state == 2 || chip-> drive_A_state == 3)
  {
-//chip->speed_percent_A
+    printf("A stopped \n"); 
+ pin_dac_write(chip->pin_M1, 0);
+ pin_dac_write(chip->pin_M2, 0);
  }
 
 
 
  if (chip-> drive_B_state == 0)
  { 
-    // chip->speed_percent_B
+    printf("B backwards \n"); 
+     pin_dac_write(chip->pin_M3, 0);
+     pin_dac_write(chip->pin_M4, chip->speed_percent_B) ;
  }
+
  if (chip-> drive_B_state == 1) 
  {
-  //  // chip->speed_percent_B
+    printf("B forwards \n"); 
+     pin_dac_write(chip->pin_M3, chip->speed_percent_B);
+     pin_dac_write(chip->pin_M4,  0) ;
  }
  if (chip-> drive_B_state == 2 || chip-> drive_B_state == 3)
  {
-  //  // chip->speed_percent_B
+    printf("B stopped \n"); 
+     pin_dac_write(chip->pin_M3, 0);
+     pin_dac_write(chip->pin_M4, 0);
  }
-  if (chip-> drive_A_state == 0 || chip-> drive_A_state == 1)
-  {
-  timer_start(chip->timer_motorA, (100 - chip->speed_percent_A) * 2400 , true);
- 
-  }
 
-   if (chip-> drive_B_state == 0 || chip-> drive_B_state == 1)
-   {
-   timer_start(chip->timer_motorB, (100 - chip->speed_percent_B) * 2400, true);
-   }
 
 }
 
 
-// graphics for motor A
-void chip_timer_event_motorA(void *user_data) {
-  chip_state_t *chip = (chip_state_t*)user_data;
-  
-  if ( chip-> drive_A_state == 0 )   chip->motorAphase=chip->motorAphase - 1;
-  if ( chip-> drive_A_state == 1) chip->motorAphase=chip->motorAphase + 1;
-  if (chip->motorAphase < 0) chip->motorAphase =8;
-  if (chip->motorAphase >8) chip->motorAphase = 0;
-
-}
-
-// graphics for motor B
-void chip_timer_event_motorB(void *user_data) {
-  chip_state_t *chip = (chip_state_t*)user_data;
-
-  if ( chip-> drive_B_state == 0 ) chip->motorBphase=chip->motorBphase - 1;
-  if ( chip-> drive_B_state == 1) chip->motorBphase=chip->motorBphase + 1;
-  if (chip->motorBphase < 0) chip->motorBphase = 8;
-  if (chip->motorBphase > 8) chip->motorBphase = 0;
-}
 
 // watch dog A
 void chip_timer_event_Awatchdog(void *user_data) {
@@ -503,8 +442,6 @@ void chip_timer_event_Bwatchdog(void *user_data) {
   chip_state_t *chip = (chip_state_t*)user_data;
  }
 
-
- 
 
 void draw_board(chip_state_t *chip, uint32_t x_start,  uint32_t y_start) {
 // size of our graphic

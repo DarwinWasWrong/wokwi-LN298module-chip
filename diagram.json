@@ -4,7 +4,24 @@
   "editor": "wokwi",
   "parts": [
     { "type": "wokwi-arduino-uno", "id": "uno", "top": 240.6, "left": -0.6, "attrs": {} },
-    { "type": "chip-moduleLN298", "id": "chip1", "top": 164.22, "left": 331.2, "attrs": {} }
+    { "type": "chip-moduleLN298", "id": "chip1", "top": 164.22, "left": 331.2, "attrs": {} },
+    {
+      "type": "chip-scope",
+      "id": "scope1",
+      "top": -100,
+      "left": 100,
+      "attrs": {
+        "sampleTimeUs": "100",
+        "sampleTimeMs": "0",
+        "triggerChannel": "0",
+        "triggerMode": "1",
+        "crtColor": "0",
+        "trace0Color": "14",
+        "trace1Color": "12",
+        "trace2Color": "10",
+        "trace3Color": "2"
+      }
+    }
   ],
   "connections": [
     [ "chip1:IN4", "uno:6", "green", [ "h0" ] ],
@@ -14,7 +31,13 @@
     [ "chip1:ENB", "uno:5", "green", [ "h0" ] ],
     [ "chip1:ENA", "uno:10", "green", [ "h0" ] ],
     [ "chip1:5V", "uno:5V", "red", [ "v0", "h72.44", "v278.4", "h-508.8" ] ],
-    [ "chip1:GND", "uno:GND.3", "black", [ "h82.04", "v307.2", "h-489.6", "v-9.6" ] ]
+    [ "chip1:GND", "uno:GND.3", "black", [ "h82.04", "v307.2", "h-489.6", "v-9.6" ] ],
+    [ "chip1:M1", "scope1:A0", "green", [ "v0", "h341.24", "v-326.4" ] ],
+    [ "chip1:M2", "scope1:A1", "green", [ "h322.04", "v-297.6" ] ],
+    [ "chip1:M3", "scope1:A2", "green", [ "h302.84", "v-278.4", "h-19.2" ] ],
+    [ "chip1:M4", "scope1:A3", "green", [ "h283.64", "v-249.6", "h-9.6" ] ],
+    [ "scope1:D0", "chip1:ENA", "green", [ "h-172", "v33.82" ] ],
+    [ "scope1:D1", "chip1:ENB", "green", [ "h-172", "v33.82" ] ]
   ],
-  "dependencies": {}
+  "dependencies": { "chip-scope": "github:Dlloydev/Wokwi-Chip-scope@1.0.7" }
 }
