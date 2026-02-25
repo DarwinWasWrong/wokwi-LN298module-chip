@@ -202,10 +202,10 @@ void chip_init(void) {
   // Display values
   chip->speed_percent_A=0;
   chip->speed_percent_B=0;
-  chip->pin_M1=0;
-  chip->pin_M2=0;
-  chip->pin_M3=0;
-  chip->pin_M4=0;
+  chip->pin_M1;
+  chip->pin_M2;
+  chip->pin_M3;
+  chip->pin_M4;
 
   // display colors
   chip-> white      = (rgba_t) { .r = 0xff, .g = 0xff, .b = 0xff, .a = 0xff };
@@ -291,6 +291,7 @@ void chip_pin_change_PWM_A(void *user_data, pin_t pin, uint32_t value) {
   // if a change then redisplay
   if ( chip->previous_speed_percent_A != chip->speed_percent_A)
   {
+    printf("NEW VALUE: %d\n", chip->speed_percent_A);
    send_signal(chip);
  
    chip->previous_speed_percent_A = chip->speed_percent_A;
@@ -315,8 +316,9 @@ void chip_pin_change_PWM_B(void *user_data, pin_t pin, uint32_t value) {
   // if a change then redisplay
   if ( chip->previous_speed_percent_B != chip->speed_percent_B  )
   {
-   //printf("chip->previous_speed_percent_B %d chip->speed_percent_B %d \n",chip->previous_speed_percent_B ,chip->speed_percent_B );
+   printf("NEW VALUE: %d\n", chip->speed_percent_B);
    send_signal(chip);
+
    chip->previous_speed_percent_B = chip->speed_percent_B;
   }
  }
@@ -374,26 +376,21 @@ void send_signal(chip_state_t *chip) {
   
   //turn off the two timers
   timer_stop(chip->timer_motorA);
-
   timer_stop(chip->timer_motorB);
-
-  printf("chip->speed_percent_A %d chip->speed_percent_B %d \n",chip->speed_percent_A ,chip->speed_percent_B );
-
-
 
 // backwards
  if (chip-> drive_A_state == 0) 
  {
-  printf("A backwards \n"); 
+  printf("A backwards %d\n", chip->speed_percent_A/25);  
  pin_dac_write(chip->pin_M1, 0);
- pin_dac_write(chip->pin_M2, chip->speed_percent_A);
+ pin_dac_write(chip->pin_M2, chip->speed_percent_A/25);
 
  }
  //forwards
  if (chip-> drive_A_state == 1) 
  {
     printf("A forwards \n"); 
- pin_dac_write(chip->pin_M1, chip->speed_percent_A);
+ pin_dac_write(chip->pin_M1, chip->speed_percent_A/25 );
  pin_dac_write(chip->pin_M2, 0);
  }
 
@@ -409,15 +406,15 @@ void send_signal(chip_state_t *chip) {
 
  if (chip-> drive_B_state == 0)
  { 
-    printf("B backwards \n"); 
+    printf("B backwards %d\n", chip->speed_percent_B/25);  
      pin_dac_write(chip->pin_M3, 0);
-     pin_dac_write(chip->pin_M4, chip->speed_percent_B) ;
+     pin_dac_write(chip->pin_M4, chip->speed_percent_B/25) ;
  }
 
  if (chip-> drive_B_state == 1) 
  {
-    printf("B forwards \n"); 
-     pin_dac_write(chip->pin_M3, chip->speed_percent_B);
+    printf("B forwards %d\n", chip->speed_percent_B/25); 
+     pin_dac_write(chip->pin_M3, chip->speed_percent_B/25);
      pin_dac_write(chip->pin_M4,  0) ;
  }
  if (chip-> drive_B_state == 2 || chip-> drive_B_state == 3)
