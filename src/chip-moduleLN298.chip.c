@@ -202,10 +202,10 @@ void chip_init(void) {
   // Display values
   chip->speed_percent_A=0;
   chip->speed_percent_B=0;
-  chip->pin_M1;
-  chip->pin_M2;
-  chip->pin_M3;
-  chip->pin_M4;
+  //chip->pin_M1;
+  //chip->pin_M2;
+  //chip->pin_M3;
+  //chip->pin_M4;
 
   // display colors
   chip-> white      = (rgba_t) { .r = 0xff, .g = 0xff, .b = 0xff, .a = 0xff };
