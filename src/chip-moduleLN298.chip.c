@@ -1,34 +1,9 @@
-
-// Wokwi Custom Chip - For docs and examples see:
-// https://docs.wokwi.com/chips-api/getting-started
-//
-// SPDX-License-Identifier: MIT
-// Copyright 2023 Darwin WasWrong
-// src/L298-module.chip.c
-
-// thanks to
-// Maverick - for saving my mind with PWM
-//
-// https://notisrac.github.io/FileToCArray/
-// for the conversion for images
-//
-
 #include "wokwi-api.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "graphics.h"
+
 #define BOARD_HEIGHT 100
 #define BOARD_WIDTH 100
-
-
-// the various states the channel can be in
-const char drive_state[][17]=
-{
-  "Backward       ",
-  "Forward        ", 
-  "Brake Stop     ",
-  "Free Stop      "
-  };
 
 // basic RGBA color
 typedef struct {
@@ -39,7 +14,6 @@ typedef struct {
 } rgba_t;
 
 typedef struct {
-
   //Module Pins
   // channel A
   pin_t pin_IN1;
@@ -102,11 +76,7 @@ typedef struct {
   rgba_t   red;
   rgba_t   blue;
 
- // text start and postion
-  uint32_t vertical_start;
-  uint32_t position_x;
-  uint32_t position_y;
-  
+ 
   uint8_t  speed_percent_A;
   uint8_t  speed_percent_B;
 
@@ -132,13 +102,8 @@ typedef struct {
   float voltageout_M4;
 } chip_state_t;
 
-
 // screen functions
-
-static void draw_board(chip_state_t *chip, uint32_t x_start,  uint32_t y_start) ;
-
 static void send_signal(chip_state_t *chip);
-
 
 // timer for watchdog
 static void chip_timer_event_Awatchdog(void *user_data);
@@ -151,7 +116,6 @@ static void chip_pin_change_PWM_B(void *user_data, pin_t pin, uint32_t value);
 
 void chip_init(void) {
   printf("*** LN298chip initialising...\n");
-  
   chip_state_t *chip = malloc(sizeof(chip_state_t));
 
   chip->pin_ENA = pin_init("ENA",INPUT);
@@ -197,33 +161,13 @@ void chip_init(void) {
   unsigned long  low_ENB;
   unsigned long  previous_high_ENB;
   unsigned long  previous_low_ENB;
-
   unsigned long  high_time_ENA;
   unsigned long  low_time_ENA;
- 
   unsigned long  high_time_ENB;
   unsigned long  low_time_ENB;
-  
-  // Display values
+ 
   chip->speed_percent_A=0;
   chip->speed_percent_B=0;
-  //chip->pin_M1;
-  //chip->pin_M2;
-  //chip->pin_M3;
-  //chip->pin_M4;
-
-  // display colors
-  chip-> white      = (rgba_t) { .r = 0xff, .g = 0xff, .b = 0xff, .a = 0xff };
-  chip-> green      = (rgba_t) { .r = 0x08, .g = 0x7f, .b = 0x45, .a = 0xff };
-  chip-> background = (rgba_t) { .r = 0xf7, .g = 0xf7, .b = 0xf7, .a = 0xff };
-  chip-> purple    = (rgba_t) { .r = 0xff, .g=0x00,   .b=0xff,   .a=0xff   };
-  chip-> black    =  (rgba_t) { .r = 0x00, .g=0x00,   .b=0x00,   .a=0x00   };
-  chip-> red    =  (rgba_t) { .r = 0xff, .g=0x00,   .b=0x00,   .a=0xff   };
-  chip-> blue    =  (rgba_t) { .r = 0x00, .g=0x00,   .b=0xff,   .a=0xff   };
-  chip->row = 0;
-  // get the screen size
-  chip->framebuffer = framebuffer_init(&chip->fb_w, &chip->fb_h);
-  //   printf("Framebuffer: fb_w=%d, fb_h=%d\n", chip->fb_w, chip->fb_h);
  
 const timer_config_t timer_config_Awatchdog = {
     .callback = chip_timer_event_Awatchdog,
@@ -272,8 +216,7 @@ const pin_watch_config_t watch_config_PWM_B = {
   pin_watch(chip->pin_IN3, &watch_config);
   pin_watch(chip->pin_IN4, &watch_config);
 
-  printf( "Draw Board");
-  draw_board(chip,0,0);
+
 }
 
 // PWM A pin change function for watch
@@ -373,7 +316,6 @@ if (use_PWM_ENB )
   send_signal(chip);
 }
 
-
 void send_signal(chip_state_t *chip) {
   
   //turn off the two timers
@@ -384,34 +326,26 @@ void send_signal(chip_state_t *chip) {
  if (chip-> drive_A_state == 0) 
  {
   chip->voltageout_M2= chip->speed_percent_A/20.00;
-    //   printf("A backwards voltageout_M2 %f\n", chip->voltageout_M2); 
- pin_dac_write(chip->pin_M1, 0);
- pin_dac_write(chip->pin_M2, chip->voltageout_M2);
+  pin_dac_write(chip->pin_M1, 0);
+  pin_dac_write(chip->pin_M2, chip->voltageout_M2);
 
  }
  //forwards
  if (chip-> drive_A_state == 1) 
  {
-    //   printf("A forwards \n"); 
-     chip->voltageout_M1= chip->speed_percent_A/20.00;
-      //   printf("A forwards voltageout_M1 %f\n", chip->voltageout_M1); 
- pin_dac_write(chip->pin_M1, chip->voltageout_M1 );
- pin_dac_write(chip->pin_M2, 0);
+  chip->voltageout_M1= chip->speed_percent_A/20.00;
+  pin_dac_write(chip->pin_M1, chip->voltageout_M1 );
+  pin_dac_write(chip->pin_M2, 0);
  }
 
  //stopped
  if (chip-> drive_A_state == 2 || chip-> drive_A_state == 3)
  {
-    //   printf("A stopped \n"); 
- pin_dac_write(chip->pin_M1, 0);
- pin_dac_write(chip->pin_M2, 0);
+  pin_dac_write(chip->pin_M1, 0);
+  pin_dac_write(chip->pin_M2, 0);
  }
-
-
-
  if (chip-> drive_B_state == 0)
  { 
-    //   printf("B backwards voltageout_M4 %f\n", chip->voltageout_M4);  
     chip->voltageout_M4= chip->speed_percent_B/20.00;
      pin_dac_write(chip->pin_M3, 0);
      pin_dac_write(chip->pin_M4, chip->voltageout_M4) ;
@@ -419,24 +353,16 @@ void send_signal(chip_state_t *chip) {
 
  if (chip-> drive_B_state == 1) 
  {
-    chip->voltageout_M3= chip->speed_percent_B/20.00;
-   
-     //printf("B forwards voltageout_M3 %f\n", chip->voltageout_M3);
-     pin_dac_write(chip->pin_M3, chip->voltageout_M3);
-     pin_dac_write(chip->pin_M4,  0) ;
+  chip->voltageout_M3= chip->speed_percent_B/20.00;
+  pin_dac_write(chip->pin_M3, chip->voltageout_M3);
+  pin_dac_write(chip->pin_M4,  0) ;
  }
  if (chip-> drive_B_state == 2 || chip-> drive_B_state == 3)
  {
-    //printf("B stopped \n"); 
      pin_dac_write(chip->pin_M3, 0);
      pin_dac_write(chip->pin_M4, 0);
  }
-
-
 }
-
-
-
 // watch dog A
 void chip_timer_event_Awatchdog(void *user_data) {
   chip_state_t *chip = (chip_state_t*)user_data;
@@ -448,33 +374,6 @@ void chip_timer_event_Bwatchdog(void *user_data) {
  }
 
 
-void draw_board(chip_state_t *chip, uint32_t x_start,  uint32_t y_start) {
-// size of our graphic
-uint8_t square_size = 100;
-uint32_t pixel_spot_data = 0;
-for (int x=x_start;x < square_size + x_start; x++)
-   {
-     for (int y=y_start;y<square_size + y_start ;y++)
-    {
-
-    // rgba_t  color1 =  rgba_t(test_pattern[pixel_spot_data] );
-      uint32_t pixel_data =  board[pixel_spot_data] ; 
-        //uint32_t pixel_data = all_cogs[pos][pixel_spot_data] ;
-        rgba_t  color =
-            { 
-            .r= (pixel_data  & 0xFF000000) >> 24,
-            .g = (pixel_data & 0x00FF0000) >> 16,
-            .b = (pixel_data & 0x0000FF00) >> 8,
-            .a = (pixel_data & 0x000000FF) 
-            };
-        
-  
-        uint32_t offset = chip->fb_w * 4 ;  
-        buffer_write(chip->framebuffer, (offset * x) + y * 4, (uint8_t*)&color , 4); 
-        pixel_spot_data++;
-    }
-   }
-} 
 
 
 
