@@ -383,9 +383,7 @@ void send_signal(chip_state_t *chip) {
 // backwards
  if (chip-> drive_A_state == 0) 
  {
-
- 
-  chip->voltageout_M2= chip->speed_percent_A/25.00;
+  chip->voltageout_M2= chip->speed_percent_A/20.00;
     //   printf("A backwards voltageout_M2 %f\n", chip->voltageout_M2); 
  pin_dac_write(chip->pin_M1, 0);
  pin_dac_write(chip->pin_M2, chip->voltageout_M2);
@@ -395,7 +393,7 @@ void send_signal(chip_state_t *chip) {
  if (chip-> drive_A_state == 1) 
  {
     //   printf("A forwards \n"); 
-     chip->voltageout_M1= chip->speed_percent_A/25.00;
+     chip->voltageout_M1= chip->speed_percent_A/20.00;
       //   printf("A forwards voltageout_M1 %f\n", chip->voltageout_M1); 
  pin_dac_write(chip->pin_M1, chip->voltageout_M1 );
  pin_dac_write(chip->pin_M2, 0);
@@ -414,14 +412,14 @@ void send_signal(chip_state_t *chip) {
  if (chip-> drive_B_state == 0)
  { 
     //   printf("B backwards voltageout_M4 %f\n", chip->voltageout_M4);  
-    chip->voltageout_M4= chip->speed_percent_B/25.00;
+    chip->voltageout_M4= chip->speed_percent_B/20.00;
      pin_dac_write(chip->pin_M3, 0);
      pin_dac_write(chip->pin_M4, chip->voltageout_M4) ;
  }
 
  if (chip-> drive_B_state == 1) 
  {
-    chip->voltageout_M3= chip->speed_percent_B/25.00;
+    chip->voltageout_M3= chip->speed_percent_B/20.00;
    
      //printf("B forwards voltageout_M3 %f\n", chip->voltageout_M3);
      pin_dac_write(chip->pin_M3, chip->voltageout_M3);
