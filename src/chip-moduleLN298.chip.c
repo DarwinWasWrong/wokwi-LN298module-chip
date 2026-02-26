@@ -125,6 +125,11 @@ typedef struct {
 
   timer_t timer_motorA;
   timer_t timer_motorB;
+
+  float voltageout_M1;
+  float voltageout_M2;
+  float voltageout_M3;
+  float voltageout_M4;
 } chip_state_t;
 
 
@@ -218,7 +223,7 @@ void chip_init(void) {
   chip->row = 0;
   // get the screen size
   chip->framebuffer = framebuffer_init(&chip->fb_w, &chip->fb_h);
-  printf("Framebuffer: fb_w=%d, fb_h=%d\n", chip->fb_w, chip->fb_h);
+  //   printf("Framebuffer: fb_w=%d, fb_h=%d\n", chip->fb_w, chip->fb_h);
  
 const timer_config_t timer_config_Awatchdog = {
     .callback = chip_timer_event_Awatchdog,
@@ -291,7 +296,6 @@ void chip_pin_change_PWM_A(void *user_data, pin_t pin, uint32_t value) {
   // if a change then redisplay
   if ( chip->previous_speed_percent_A != chip->speed_percent_A)
   {
-    printf("NEW VALUE: %d\n", chip->speed_percent_A);
    send_signal(chip);
  
    chip->previous_speed_percent_A = chip->speed_percent_A;
@@ -316,9 +320,7 @@ void chip_pin_change_PWM_B(void *user_data, pin_t pin, uint32_t value) {
   // if a change then redisplay
   if ( chip->previous_speed_percent_B != chip->speed_percent_B  )
   {
-   printf("NEW VALUE: %d\n", chip->speed_percent_B);
    send_signal(chip);
-
    chip->previous_speed_percent_B = chip->speed_percent_B;
   }
  }
@@ -381,23 +383,28 @@ void send_signal(chip_state_t *chip) {
 // backwards
  if (chip-> drive_A_state == 0) 
  {
-  printf("A backwards %d\n", chip->speed_percent_A/25);  
+
+ 
+  chip->voltageout_M2= chip->speed_percent_A/25.00;
+    //   printf("A backwards voltageout_M2 %f\n", chip->voltageout_M2); 
  pin_dac_write(chip->pin_M1, 0);
- pin_dac_write(chip->pin_M2, chip->speed_percent_A/25);
+ pin_dac_write(chip->pin_M2, chip->voltageout_M2);
 
  }
  //forwards
  if (chip-> drive_A_state == 1) 
  {
-    printf("A forwards \n"); 
- pin_dac_write(chip->pin_M1, chip->speed_percent_A/25 );
+    //   printf("A forwards \n"); 
+     chip->voltageout_M1= chip->speed_percent_A/25.00;
+      //   printf("A forwards voltageout_M1 %f\n", chip->voltageout_M1); 
+ pin_dac_write(chip->pin_M1, chip->voltageout_M1 );
  pin_dac_write(chip->pin_M2, 0);
  }
 
  //stopped
  if (chip-> drive_A_state == 2 || chip-> drive_A_state == 3)
  {
-    printf("A stopped \n"); 
+    //   printf("A stopped \n"); 
  pin_dac_write(chip->pin_M1, 0);
  pin_dac_write(chip->pin_M2, 0);
  }
@@ -406,20 +413,23 @@ void send_signal(chip_state_t *chip) {
 
  if (chip-> drive_B_state == 0)
  { 
-    printf("B backwards %d\n", chip->speed_percent_B/25);  
+    //   printf("B backwards voltageout_M4 %f\n", chip->voltageout_M4);  
+    chip->voltageout_M4= chip->speed_percent_B/25.00;
      pin_dac_write(chip->pin_M3, 0);
-     pin_dac_write(chip->pin_M4, chip->speed_percent_B/25) ;
+     pin_dac_write(chip->pin_M4, chip->voltageout_M4) ;
  }
 
  if (chip-> drive_B_state == 1) 
  {
-    printf("B forwards %d\n", chip->speed_percent_B/25); 
-     pin_dac_write(chip->pin_M3, chip->speed_percent_B/25);
+    chip->voltageout_M3= chip->speed_percent_B/25.00;
+   
+     //printf("B forwards voltageout_M3 %f\n", chip->voltageout_M3);
+     pin_dac_write(chip->pin_M3, chip->voltageout_M3);
      pin_dac_write(chip->pin_M4,  0) ;
  }
  if (chip-> drive_B_state == 2 || chip-> drive_B_state == 3)
  {
-    printf("B stopped \n"); 
+    //printf("B stopped \n"); 
      pin_dac_write(chip->pin_M3, 0);
      pin_dac_write(chip->pin_M4, 0);
  }
