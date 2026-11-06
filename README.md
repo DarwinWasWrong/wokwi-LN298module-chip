@@ -15,7 +15,7 @@ eg
   "editor": "wokwi",
   "parts": [
     { "type": "wokwi-arduino-uno", "id": "uno", "top": 125.4, "left": -0.6, "attrs": {} },
-    { "type": "chip-moduleLN298", "id": "chip1", "top": 29.82, "left": 340.8, "attrs": {} }
+    { "type": "chip-moduleLN298", "id": "chip1", "top": 29.82, "left": 340.8, "attrs": { "supplyVoltage": "12", "voltageDrop": "2" } }
   ],
   "connections": [
     [ "chip1:ENA", "uno:10", "green", [ "h0" ] ],
