@@ -25,6 +25,6 @@ eg
     [ "chip1:IN4", "uno:6", "green", [ "h-144" ] ],
     [ "chip1:ENB", "uno:5", "green", [ "h-134.4" ] ]
   ],
-  "dependencies": { "chip-modulel298": "github:DarwinWasWrong/wokwi-LN298module-chip@1.0.0" }
+  "dependencies": { "chip-modulel298": "github:DarwinWasWrong/wokwi-LN298module-chip@2.0.3" }
 }
 ```
